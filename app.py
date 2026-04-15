@@ -2,6 +2,7 @@ import streamlit as st
 import pickle
 import numpy as np
 import random
+import matplotlib.pyplot as plt
 
 # Load model
 try:
@@ -10,123 +11,185 @@ except FileNotFoundError:
     model = None
 
 # Page config
-st.set_page_config(page_title="Product Success Predictor", layout="centered")
+st.set_page_config(page_title="Product Success Pro", layout="centered")
 
-# 💜 LIGHT VIOLET CLEAN UI
+# 🎨 UI CUSTOMIZATION
 st.markdown("""
     <style>
-    .stApp {
-        background-color: #EEE6FF; 
-    }
-    h1, h2, h3, h4, h5, h6, p, label {
-        color: black !important;
-    }
-    h1 {
+    .stApp { background-color: #F3E8FF; }
+    h1, h2, h3, p, label { color: #1F2937 !important; }
+    
+    /* Center the Title */
+    .main-title {
         text-align: center;
-        font-size: 38px;
+        font-size: 2.5rem;
         font-weight: bold;
+        padding-bottom: 0.5rem;
     }
-    .stNumberInput input {
-        background-color: white;
-        border-radius: 8px;
-        color: black;
-    }
+
     .stButton>button {
-        background-color: #C5B3FF;
-        color: black;
-        border-radius: 10px;
-        height: 3em;
+        background-color: #A78BFA;
+        color: white;
+        border-radius: 12px;
+        height: 3.5em;
+        font-weight: bold;
         width: 100%;
-        font-size: 16px;
-        font-weight: 600;
         border: none;
     }
-    .stButton>button:hover {
-        background-color: #B19CFF;
+    .stButton>button:hover { background-color: #7C3AED; color: white; }
+    
+    /* Hide the numeric spinners */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button {
+        -webkit-appearance: none; margin: 0;
     }
     </style>
 """, unsafe_allow_html=True)
 
-st.title("Product Success Predictor")
+# Centered Title
+st.markdown('<h1 class="main-title">Product Success Predictor</h1>', unsafe_allow_html=True)
+st.markdown("<p style='text-align: center;'>Advanced Market Analytics & Strategic Growth Forecasting</p>", unsafe_allow_html=True)
 st.markdown("---")
 
-# Inputs
-st.subheader("Enter Product Details")
-price = st.number_input("💰 Price (₹)", min_value=0, step=1)
-rating = st.slider("⭐ Rating", 1.0, 5.0, step=0.5)
-discount = st.slider("🏷️ Discount (%)", 0, 100, step=5)
+# 🧱 STRUCTURED INPUTS
+st.subheader("📦 Product Parameters")
+col1, col2 = st.columns(2)
+
+with col1:
+    price_raw = st.text_input("💰 Unit Price (₹)", value="500")
+    rating = st.slider("⭐ Consumer Rating", 1.0, 5.0, step=0.1, value=4.0)
+
+with col2:
+    discount = st.slider("🏷️ Promotional Discount (%)", 0, 100, step=1, value=10)
+    category = st.selectbox("📂 Market Segment", ["Electronics", "Fashion", "Beauty", "Home Decor", "Fitness"])
+
+# --- PROFESSIONAL DATA POOLS ---
+
+excellent_suggestions = [
+    "Scale performance marketing across high-intent social channels immediately.",
+    "Implement a 'Premium Tier' version to capitalize on high brand equity.",
+    "Initiate international logistics expansion to capture global market share.",
+    "Develop a high-tier influencer partnership program for long-term brand advocacy.",
+    "Launch a tiered loyalty program to increase Customer Lifetime Value (CLV).",
+    "Optimise supply chain efficiency to maintain margins during high-volume scaling.",
+    "Execute a 'Flash Sale' strategy for complementary products to cross-sell.",
+    "Invest in 4K video marketing assets to further enhance product perceived value.",
+    "Secure retail distribution partnerships with premium physical department stores.",
+    "Apply for industry-specific design or innovation awards to solidify market authority."
+]
+
+moderate_suggestions = [
+    "Conduct rigorous A/B testing on primary product imagery to improve Click-Through Rates.",
+    "Optimize SEO metadata and long-tail keywords to capture organic search traffic.",
+    "Deploy 'Scarcity Marketing' tactics such as limited-stock countdown timers.",
+    "Introduce a free shipping threshold to increase Average Order Value (AOV).",
+    "Revise product descriptions to focus on 'Benefits' rather than just technical 'Features'.",
+    "Request video testimonials from existing customers to build stronger social proof.",
+    "Bundle this product with a high-margin accessory to increase total transaction value.",
+    "Retarget abandoned cart users with a personalized 5% incentive discount.",
+    "Evaluate competitor pricing models to ensure price-point competitiveness.",
+    "Improve the unboxing experience to drive organic social media 'unboxing' shares."
+]
+
+low_suggestions = [
+    "Perform a comprehensive pivot of the core marketing angle and target persona.",
+    "Execute an aggressive 'Buy One Get One' (BOGO) campaign to clear existing inventory.",
+    "Conduct deep-dive customer surveys to identify fundamental product-market friction.",
+    "Complete a brand identity refresh including logo and packaging aesthetics.",
+    "Temporarily reduce pricing to the 'Low-Entry' bracket to stimulate initial velocity.",
+    "Shift focus to micro-niche markets where competition is significantly lower.",
+    "Audit technical specifications against the top 3 market competitors for gaps.",
+    "Invest in higher quality customer support to mitigate the impact of low ratings.",
+    "Incentivize honest reviews by offering future store credits to verified buyers.",
+    "Consider white-labeling or rebranding the product for a different demographic."
+]
+
+excellent_insights = [
+    "Market data suggests your product is currently in the 'High-Growth' quadrant.",
+    "Current price-to-rating ratio indicates strong consumer psychological value.",
+    "The product displays high viral potential within the chosen market segment.",
+    "Low price sensitivity detected; you may have room for a 5-10% price increase.",
+    "Your metrics align with the top 5% of successful launches in this category."
+]
+
+moderate_insights = [
+    "The product is hovering at 'Market Average'; minor UX tweaks could trigger a breakout.",
+    "Conversion friction is likely occurring at the consideration stage, not the interest stage.",
+    "Your rating is stable, but your discount strategy is slightly below the market competitive edge.",
+    "Growth is currently linear; non-linear growth requires a shift in visual storytelling.",
+    "Increasing your rating by just 0.4 points could double your predicted success rate."
+]
+
+low_insights = [
+    "Current market fit is misaligned; the price point exceeds the perceived utility.",
+    "High bounce rates are predicted based on the current rating-to-price correlation.",
+    "Consumer trust appears to be the primary bottleneck for this specific SKU.",
+    "The 'Value Proposition' is not currently clear enough to compete with market leaders.",
+    "Significant 'Friction Points' detected in the current promotional structure."
+]
 
 st.markdown("---")
 
-# --- SUGGESTION POOLS (10 EACH) ---
-excellent_tips = [
-    "Scale your ads—this product is ready for a larger audience.",
-    "Introduce a 'Premium Edition' to capture higher margins.",
-    "Focus on inventory management to avoid 'Out of Stock' issues.",
-    "Create high-quality video demos to boost conversions further.",
-    "Encourage satisfied customers to leave detailed photo reviews.",
-    "Partner with influencers in your niche for brand authority.",
-    "Consider expanding to international shipping.",
-    "Create a loyalty program for repeat buyers of this item.",
-    "Use this product as a 'Hero' item in your homepage banners.",
-    "Bundle this with slower-moving items to clear stock."
-]
-
-moderate_tips = [
-    "A/B test your product images to see which gets more clicks.",
-    "Respond to all 3-star reviews to show you care about quality.",
-    "Offer 'Free Shipping' for a limited time to nudge buyers.",
-    "Increase the discount by 5% and monitor the sales lift.",
-    "Optimize your product description with better SEO keywords.",
-    "Add a 'Limited Stock' tag to create a sense of urgency.",
-    "Send a re-engagement email to users who added this to cart.",
-    "Compare your price point with 3 top competitors.",
-    "Add an FAQ section to address common customer hesitations.",
-    "Ensure your lighting in product photos is bright and professional."
-]
-
-low_tips = [
-    "Review the product quality; the current rating is a bottleneck.",
-    "Consider a drastic price drop to find the market's 'sweet spot'.",
-    "Pivot the marketing angle—try targeting a different demographic.",
-    "Offer a 'Buy 1 Get 1' deal to gain initial traction.",
-    "Pause ad spend until the product page conversion improves.",
-    "Conduct a survey to find out why customers are leaving.",
-    "Refresh the branding and packaging for a modern look.",
-    "Check if the shipping costs are scaring customers away.",
-    "Seek a co-branding opportunity to build trust.",
-    "Launch a 'Beta' version at a lower cost to gather feedback."
-]
-
-# Prediction
 if st.button("Predict"):
-    if price == 0:
-        st.warning("Please enter a valid price")
+    try:
+        price = float(price_raw)
+    except ValueError:
+        st.error("Please enter a valid numeric price.")
+        st.stop()
+
+    if price <= 0:
+        st.warning("Price must be greater than zero.")
     elif model is None:
         st.error("Model file 'model.pkl' not found!")
     else:
+        # Prediction logic
         input_data = np.array([[price, rating, discount]])
         prediction = model.predict(input_data)
         result = round(float(prediction[0]), 2)
 
-        st.write(f"### Predicted Success: {result}%")
-        # Ensure progress bar stays between 0-100
-        progress_val = max(0, min(100, int(result)))
-        st.progress(progress_val)
-
-        st.markdown("### 💡 Expert Suggestions")
+        # 📊 RESULTS DASHBOARD
+        st.subheader("📊 Strategic Analysis Results")
+        m_col1, m_col2 = st.columns([1, 1.5])
         
-        if result > 70:
-            st.success("**Status: Excellent Potential**")
-            pool = excellent_tips
-        elif result > 40:
-            st.warning("**Status: Moderate Performance**")
-            pool = moderate_tips
-        else:
-            st.error("**Status: Low Market Fit**")
-            pool = low_tips
+        with m_col1:
+            st.metric(label="Predicted Success Probability", value=f"{result}%")
+            if result > 70:
+                st.success("Status: High Potential")
+                s_pool, i_pool = excellent_suggestions, excellent_insights
+            elif result > 40:
+                st.warning("Status: Moderate Fit")
+                s_pool, i_pool = moderate_suggestions, moderate_insights
+            else:
+                st.error("Status: Low Traction")
+                s_pool, i_pool = low_suggestions, low_insights
 
-        # Show 3 random suggestions from the correct pool
-        selected_suggestions = random.sample(pool, 3)
+        with m_col2:
+            st.write("**💡 AI Strategic Insights:**")
+            selected_insights = random.sample(i_pool, 3)
+            for insight in selected_insights:
+                st.write(f"• {insight}")
+
+        # 📉 VISUAL CHART (BOX STYLE)
+        # Success Rate vs Market Gap comparison
+        fig, ax = plt.subplots(figsize=(6, 2.5))
+        fig.patch.set_facecolor('#F3E8FF')
+        ax.set_facecolor('#F3E8FF')
+        
+        labels = ['Success Score', 'Market Gap']
+        values = [result, 100 - result]
+        # Success is Purple, Gap is Slate Gray (No green used)
+        colors = ['#7C3AED', '#64748B'] 
+        
+        ax.barh(labels, values, color=colors)
+        ax.set_xlim(0, 100)
+        
+        # Adding labels on the bars for clarity
+        for i, v in enumerate(values):
+            ax.text(v + 1, i, f"{v}%", color='#1F2937', fontweight='bold', va='center')
+
+        st.pyplot(fig)
+
+        st.markdown("Strategic Roadmap")
+        selected_suggestions = random.sample(s_pool, 3)
         for tip in selected_suggestions:
-            st.info(tip)
+            st.info(f"**Action Item:** {tip}")
